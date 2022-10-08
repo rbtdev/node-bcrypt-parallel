@@ -1,29 +1,20 @@
-const bcrypt = require('bcrypt'); // bcrypt passwd hasher
+const bcrypt = require('bcryptjs'); // JS bcrypt passwd hasher
 
-// Hash options
-const options = {
-  rounds: 12, // Rounds 12
-  json: true, // Return in JSON
-}
-
-const passwdAsync = async (passwords, options) => {
-  const tasks = passwords.map(pw => bcrypt.hash(pw, options.rounds));
-  const hashes = await Promise.all(tasks);
-  const res = hashes.reduce((res, h,i) => {
-    res[h] = passwords[i];
-    return res;
-  }, {});
+// Async hash a chunk of passwords
+const hash = async chunk => {
+  const res = {};
+  for (let password of chunk) {
+    const hash = await bcrypt.hash(password, 12);
+    res[hash] = password;
+  }
   return res;
 }
 
 // Main entry for worker
 // Take a 'chunk' of passwords, along with my worker ID (just for information)
 const run = async ({ chunk, workerId }) => {
-  // Hash the chunk
-  const result = await passwdAsync(chunk, options);
-  // Log that I'm done
+  const result = await hash(chunk);
   console.log(`Worker ${workerId} done`);
-  // send the result back to the main thread
   return result;
 };
 
