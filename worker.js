@@ -1,4 +1,4 @@
-const hash = require('@rbtdev/node-cmd-bcrypt'); // bcrypt passwd hasher
+const bcrypt = require('bcrypt'); // bcrypt passwd hasher
 
 // Hash options
 const options = {
@@ -6,13 +6,15 @@ const options = {
   json: true, // Return in JSON
 }
 
-// Wrap the event emitter into a promise
-const passwdAsync = (passwords, options) => new Promise(resolve => {
-  hash(passwords, options)
-    .on('done', result => {
-      resolve(result);
-    });
-});
+const passwdAsync = async (passwords, options) => {
+  const tasks = passwords.map(pw => bcrypt.hash(pw, options.rounds));
+  const hashes = await Promise.all(tasks);
+  const res = hashes.reduce((res, h,i) => {
+    res[h] = passwords[i];
+    return res;
+  }, {});
+  return res;
+}
 
 // Main entry for worker
 // Take a 'chunk' of passwords, along with my worker ID (just for information)
