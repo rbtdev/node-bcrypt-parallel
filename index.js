@@ -4,8 +4,8 @@ const os = require('os'); // To count CPUS
 const _ = require('lodash'); // To Chunk the big array into smaller ones
 const path = require('path'); // To resolve path names
 
-// Set options for worker threads
-const options = { filename: path.resolve(__dirname, 'worker') }
+// Initialize a worker instance with the js file that hashes passwords
+const worker = new Piscina({ filename: path.resolve(__dirname, 'worker.js')});
 
 // Read example passwords, split into array, 1 password per line
 const contents = fs.readFileSync('./passwds.txt', 'utf8');
@@ -20,9 +20,8 @@ const chunks = _.chunk(passwords, Math.round(passwords.length / os.cpus().length
 // Create a worker promise for each chunk
 const workers = chunks.map((chunk, i) => {
   const workerId = i+1;
-  const worker = new Piscina();
   console.log(`Starting worker ${workerId} with ${chunk.length} passwords`);
-  return worker.run({ chunk, workerId }, options);
+  return worker.run({ chunk, workerId });
 });
 
 console.log('Waiting for workers...');
