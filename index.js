@@ -10,19 +10,22 @@ const options = { filename: path.resolve(__dirname, 'worker') }
 // Read example passwords, split into array, 1 password per line
 const contents = fs.readFileSync('./passwds.txt', 'utf8');
 const passwords = contents.split('\n');
-console.log(`Read ${passwords.length} lines`);
+console.log(`Hashing ${passwords.length} passwords...`);
+
+const startTime = Date.now(); // Start a timer
 
 // Split array of passwords into chunks based on number of CPUs
 const chunks = _.chunk(passwords, Math.round(passwords.length / os.cpus().length));
 
 // Create a worker promise for each chunk
 const workers = chunks.map((chunk, i) => {
+  const workerId = i+1;
   const worker = new Piscina();
-  console.log(`Creating worker with ${chunk.length} passwords`);
-  return worker.run({ chunk, worker: i }, options);
+  console.log(`Starting worker ${workerId} with ${chunk.length} passwords`);
+  return worker.run({ chunk, workerId }, options);
 });
 
-console.log('Running workers...');
+console.log('Waiting for workers...');
 
 // Wait for all workers to complete
 Promise.all(workers)
@@ -34,11 +37,16 @@ Promise.all(workers)
         ...chunk,
       }
       return res;
-    });
+    }, {});
+    const endTime = Date.now(); // Stop the timer
 
     // Print it!
     console.log(result);
     console.log(`${Object.keys(result).length} unique keys`);
+    const timeDeltaSec= (endTime-startTime)/1000;
+    const timePerHash = timeDeltaSec/passwords.length;
+    console.log(`Total time (secs): ${timeDeltaSec.toFixed(3)} sec`);
+    console.log(`Total time/hash (secs): ${timePerHash.toFixed(3)} sec`);
   })
   .catch(err => {
     // Just in case
