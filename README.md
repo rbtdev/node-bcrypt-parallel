@@ -1,4 +1,4 @@
-# Example using `node-cmd-bcrypt` in an async parallel worker pool
+# Example using `bcryptjs` in an async parallel worker pool
 
 ```
 $ npm install
